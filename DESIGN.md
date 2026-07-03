@@ -1,18 +1,41 @@
 1. Problem Statement
 What problem are you solving, and for whom? One short paragraph.
 
-The project we are building is a personal doomscroll tracker that logs daily social media usage. It solves the problem of not realizing how much time doomscrolling takes up of your day. The tracker will aim to make doomscrolling time across various apps (Instagram, Tiktok, Youtube, etc.) visible With various ways of displaying data, like graphs showing usage over time, a pie chart to show percentage of day spent on each app and doomscrolling in total, etc. This project targets anyone with the goal to understand how much time doomscrolling takes up in their day.
+The project we are building is a personal doomscroll tracker (mobile only) that logs daily social media usage. It solves the problem of not realizing how much time doomscrolling takes up of your day. The tracker will aim to make doomscrolling time across various apps (Instagram, Tiktok, Youtube, etc.) visible With various ways of displaying data, like graphs showing usage over time, a pie chart to show percentage of day spent on each app and doomscrolling in total, etc. This project targets anyone with the goal to understand how much time doomscrolling takes up in their day.
 
 2. Proposed Solution
 A high-level description of what you're building. Include a rough sketch or description of the UI.
 
-3. User Flows
-Walk through the main ways a user interacts with your app. Numbered steps, not prose. For example:
+We are building a personal doomscroll tracker (mobile only) that logs daily social media usage through user manual entry. On download, user will be prompted with an onboarding to manually select social media apps that the user wants to be tracked. Then the user is sent to the main dashboard. 
 
-User opens the app and is prompted to log in
-After login, they see a dashboard with their weekly stats
-They click "Log session" and enter time spent and platform
-The dashboard updates to reflect the new entry
+Main dashboard UI (top to bottom):
+- My Goal (optional): User can set a goal for themselves for doomscrolling time, then this section updates to be "You are over/under/at your doomscrolling goal today", and graphs below will update with a visual indicator as well
+- Log session: The user's main daily interaction is to log their sessions in minutes for each app. The apps will be pre organized in rows with a icon and app name on the left, then on the right the user inputs their minutes used today.
+- Insights section: The area where all graphs, statistics are displayed
+
+General UI: 
+- Rounded feel where sections are framed as rounded cards
+
+
+
+3. User Flows
+Walk through the main ways a user interacts with your app. Numbered steps, not prose. 
+
+On download/first use:
+1. User opens the app and is prompted with an welcome onboarding
+2. User is given a screen with buttons for each social media platform, user chooses which to track
+
+Beyond first use, main daily use:
+1. User opens the app and will see a dashboard with weekly stats (graphs)
+2. User clicks on "Log session for __" button and enters time spent for the __ platform 
+3. If needed, user can add another platform with a + icon
+4. If needed, user can press a help button that has tabs on how to find screen time for each app (options through iOS, andriod, in-app settings)
+4. The dashboard updates with today's screen time and weekly stats, where graphs are customizable in time frame (1 week, 1 month, 3 months, 6 months, 1 year)
+
+Optionals after main daily use:
+1. User can click on a "My Goal" button in the main dashboard, app now prompts user to enter a time, and graphs update with a visual indicator if the user met their goal, new section in dashboard that will say "You are over/under/at your doomscrolling goal today"
+
+
 4. Architecture
 Describe how the system is structured:
 
