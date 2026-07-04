@@ -48,8 +48,23 @@ This section must include at least one Mermaid diagram. Use whichever diagram ty
 5. Tech Stack
 List the technologies you're using and justify each choice in one or two sentences. "Everyone uses it" is not a justification. "It's a lightweight Node framework that handles routing with minimal boilerplate, which fits our simple API needs" is.
 
+- React Native: Framework for building mobile apps with JavaScript/Typescript, has a simplicity advantage over Swift for iOS and Kotlin for Android, no need to use two seperate frameworks for two seperate operating systems
+- Expo: Set of tools and services built on top of React Native to simplify development and speed up production
+- Expo Router: Part of Expo, file-based router to manage navigation between app screens, eaiser to use compared to React Navigation
+- TypeScript: Javascript but strongly typed, better than Javascript to limit programming errors
+- SQLite: Lightweight and simple database, don't need complex features like cloud sync and accounts, just locally storing logs of doomscrolling time, noSQL isn't needed since our data isn't very dynamic, logs between days will look simliar to other days
+
 6. Out of Scope
 What are you explicitly not building? This is important — it keeps scope from creeping. List features or use cases you considered but decided to skip for now.
+
+Not building:
+- User accounts, login, passwords - Authentication is not really needed for a screen time app, we aren't buliding this for parents to track their children
+- Cloud sync - More complicated to implement, just local storage for now
+- Getting screen times direct from OS - Our inital thought on data collection but is platform specific and not very beginner friendly to do
+- Beyond the mobile platform - No support for desktop or browser, doomscrolling usually happens on our phone anyways and its unlikely you need to check stats on a computer or website
+
+Possible ideas that are more reasonable to be implemented:
+- User retention features: Ex. notifications to remind user that they haven't logged their doomscrolling time today or streaks of consecutive logs or consecutively being under the user's goal
 
 7. Security Considerations
 Think through how your app could be abused or how user data could be exposed. You don't need an exhaustive threat model, but you do need to show that you've thought about it. Things to consider:
