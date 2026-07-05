@@ -97,7 +97,6 @@ Setting this up is part of the exercise. A repo without branch protection on mai
 Branch protection: Describe what branch protection rules you've set on main (e.g., requiring PRs before merging, requiring at least one approval). Justify why these rules are useful — don't just list them.
 - Require PRs before merging + one approval: Prevents the main branch from being changed directly and prevents code errors as one teammate has to read the PR before accepting the PR to main
 - Dismiss stale approvals when new commits are pushed: Prevents new code from not actually being reviewed as the old PR acceptance is used for the new commits
-- Require branches to be up to date before merging: Makes sure PR is tested on latest version of main, so all PRs won't conflict when combined with main
 - Block force pushes: Prevents one person from directly overwriting history and code without PR review
 
 Who has access: Both teammates should be collaborators.
@@ -105,7 +104,7 @@ Who has access: Both teammates should be collaborators.
 
 9. Open Questions
 List anything you're unsure about or haven't figured out yet. These are things to resolve before or during implementation.
-- Require status checks to pass: Unsure about lint and typechecking implementation 
+- Require status checks to pass: Unsure about lint and typechecking implementation and adding checks in github
 
 10. A Note
 This is, for many of you, the first time a senior member of the club is seeing your quality of work. Try to ensure that it is of a high standard, and that you genuinely understand your approach. LLMs can build design docs like this, but often struggle in industry / at scale to build really good design doc - this is one of the few places where humans are still really needed. Practice your problem solving skills and try to write, or at least ideate, the majority of this design doc yourself.
