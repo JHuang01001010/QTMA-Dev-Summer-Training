@@ -40,7 +40,11 @@ Optionals after main daily use:
 Describe how the system is structured:
 
 Frontend: What does the UI look like? What pages or views are there?
+- One home dashboard screen with minimal UI, rounded feel, swipe down for sections for goals, logging a session, statistics 
+
 Backend API: What does your server do? List your API endpoints — the HTTP method, the path, what it accepts, and what it returns. Your backend should expose a proper API (e.g. a REST API) that your frontend calls. It should not serve HTML directly or mix frontend and backend logic.
+- We will use a REST API
+
 Database: What data are you storing? Include a schema (table names, columns, types, relationships).
 This section must include at least one Mermaid diagram. Use whichever diagram type best fits your system — an entity-relationship diagram for your schema, a sequence diagram for a key user flow, or a component/architecture diagram. GitHub renders Mermaid natively in markdown. For example:
 
@@ -53,6 +57,7 @@ List the technologies you're using and justify each choice in one or two sentenc
 - Expo Router: Part of Expo, file-based router to manage navigation between app screens, eaiser to use compared to React Navigation
 - TypeScript: Javascript but strongly typed, better than Javascript to limit programming errors
 - SQLite: Lightweight and simple database, don't need complex features like cloud sync and accounts, just locally storing logs of doomscrolling time, noSQL isn't needed since our data isn't very dynamic, logs between days will look simliar to other days
+- Node.js with Express: Simple way to build a REST API, lightweight and beginnerfriendly
 
 6. Out of Scope
 What are you explicitly not building? This is important — it keeps scope from creeping. List features or use cases you considered but decided to skip for now.
@@ -67,23 +72,40 @@ Possible ideas that are more reasonable to be implemented:
 - User retention features: Ex. notifications to remind user that they haven't logged their doomscrolling time today or streaks of consecutive logs or consecutively being under the user's goal
 
 7. Security Considerations
-Think through how your app could be abused or how user data could be exposed. You don't need an exhaustive threat model, but you do need to show that you've thought about it. Things to consider:
+Think through how your app could be abused or how user data could be exposed. You don't need an exhaustive threat model, but you do need to show that you've thought about it. For each point, describe what you're doing about it — not just that you're aware. Things to consider:
 
 Authentication & authorization: How do you verify who a user is? How do you ensure a user can only access their own data?
+- For the initial version we aren't building account login features or social components across users, the app will be for a single user without authentication
+
 Input validation: What happens if a user submits unexpected or malicious input? (Think: SQL injection, XSS.)
+- For logs and goals, we will only accept integers from 0-1440 (none to a full day), reject everything else
+- For logs if the user wants to add a platform we haven't included in the "other" field we would limit the input to be a string about about 1-20 characters, trim whitespace, limit accepted punctuation
+
 Sensitive data: Are you storing passwords? If so, are you hashing them? Are there any API keys or secrets that should never be in the codebase?
+- There isn't much sensitive data since we aren't going to build accounts and logins, only logs for doomscrolling time per day and platforms used
+- We aren't using any 3rd party services or API keys
+
 Exposed endpoints: Are any of your API endpoints accessible without authentication that shouldn't be?
-For each point, describe what you're doing about it — not just that you're aware of it.
+- We won't have any API endpoints in the first place for logs, history, stats, storing only minimal data locally
+
 
 8. Repository Setup
 Document how your GitHub repository is configured:
+Setting this up is part of the exercise. A repo without branch protection on main will be flagged in review.
+
 
 Branch protection: Describe what branch protection rules you've set on main (e.g., requiring PRs before merging, requiring at least one approval). Justify why these rules are useful — don't just list them.
+- Require PRs before merging + one approval: Prevents the main branch from being changed directly and prevents code errors as one teammate has to read the PR before accepting the PR to main
+- Dismiss stale approvals when new commits are pushed: Prevents new code from not actually being reviewed as the old PR acceptance is used for the new commits
+- Require branches to be up to date before merging: Makes sure PR is tested on latest version of main, so all PRs won't conflict when combined with main
+- Block force pushes: Prevents one person from directly overwriting history and code without PR review
+
 Who has access: Both teammates should be collaborators.
-Setting this up is part of the exercise. A repo without branch protection on main will be flagged in review.
+- Both teammates are added are collaborators (1 owner 1 collaborator)
 
 9. Open Questions
 List anything you're unsure about or haven't figured out yet. These are things to resolve before or during implementation.
+- Require status checks to pass: Unsure about lint and typechecking implementation 
 
 10. A Note
 This is, for many of you, the first time a senior member of the club is seeing your quality of work. Try to ensure that it is of a high standard, and that you genuinely understand your approach. LLMs can build design docs like this, but often struggle in industry / at scale to build really good design doc - this is one of the few places where humans are still really needed. Practice your problem solving skills and try to write, or at least ideate, the majority of this design doc yourself.
