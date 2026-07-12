@@ -1,12 +1,12 @@
 1. Problem Statement
 What problem are you solving, and for whom? One short paragraph.
 
-The project we are building is a personal doomscroll tracker (mobile only) that logs daily social media usage. It solves the problem of not realizing how much time doomscrolling takes up of your day. The tracker will aim to make doomscrolling time across various apps (Instagram, Tiktok, Youtube, etc.) visible With various ways of displaying data, like graphs showing usage over time, a pie chart to show percentage of day spent on each app and doomscrolling in total, etc. This project targets anyone with the goal to understand how much time doomscrolling takes up in their day.
+The project we are building is a personal doomscroll tracker (mobile only) that logs daily social media usage. It solves the problem of not realizing how much time doomscrolling takes up of your day. The tracker will aim to make doomscrolling time across various apps (Instagram, Tiktok, Youtube, etc.) visible with various ways of displaying data, like graphs showing usage over time, a pie chart to show percentage of day spent on each app and doomscrolling in total, etc. This project targets anyone with the goal to understand how much time doomscrolling takes up in their day.
 
 2. Proposed Solution
 A high-level description of what you're building. Include a rough sketch or description of the UI.
 
-We are building a personal doomscroll tracker (mobile only) that logs daily social media usage through user manual entry. On download, user will be prompted with an onboarding to manually select social media apps that the user wants to be tracked. Then the user is sent to the main dashboard. 
+We are building a personal doomscroll tracker (mobile only) that logs daily social media usage through user manual entry. On first launch, user will be prompted with an onboarding to manually select social media apps that the user wants to be tracked. Then the user is sent to the main dashboard. 
 
 Main dashboard UI (top to bottom):
 - My Goal (optional): User can set a goal for themselves for doomscrolling time, then this section updates to be "You are over/under/at your doomscrolling goal today", and graphs below will update with a visual indicator as well
@@ -30,7 +30,7 @@ Beyond first use, main daily use:
 2. User clicks on "Log session for __" button and enters time spent for the __ platform 
 3. If needed, user can add another platform with a + icon
 4. If needed, user can press a help button that has tabs on how to find screen time for each app (options through iOS, andriod, in-app settings)
-4. The dashboard updates with today's screen time and weekly stats, where graphs are customizable in time frame (1 week, 1 month, 3 months, 6 months, 1 year)
+5. The dashboard updates with today's screen time and weekly stats, where graphs are customizable in time frame (1 week, 1 month, 3 months, 6 months, 1 year)
 
 Optionals after main daily use:
 1. User can click on a "My Goal" button in the main dashboard, app now prompts user to enter a time, and graphs update with a visual indicator if the user met their goal, new section in dashboard that will say "You are over/under/at your doomscrolling goal today"
@@ -58,11 +58,40 @@ DELETE	        /api/logs/:id	      Guest token (ID is in URL)                   
 Database: What data are you storing? Include a schema (table names, columns, types, relationships).
 This section must include at least one Mermaid diagram. Use whichever diagram type best fits your system — an entity-relationship diagram for your schema, a sequence diagram for a key user flow, or a component/architecture diagram. GitHub renders Mermaid natively in markdown. 
 
+Schema:
+
+guest_sessions
+Stores the anonymous guest identity issued by the backend.
+- id — INTEGER, primary key
+- guest_token — TEXT, unique, backend-issued identifier or token
+- created_at — DATETIME
+- last_active_at — DATETIME
+- status — TEXT, such as active or expired
+
+usage_logs
+Stores individual doomscrolling records.
+- id — INTEGER, primary key
+- guest_session_id — INTEGER, foreign key to guest_sessions.id
+- platform_name — TEXT
+- minutes_spent — INTEGER, constrained to 0–1440
+- logged_date — DATE
+- created_at — DATETIME
+
+goals
+Stores a user’s daily screen-time target.
+- id — INTEGER, primary key
+- guest_session_id — INTEGER, foreign key to guest_sessions.id
+- daily_limit_minutes — INTEGER, constrained to 0–1440
+- created_at — DATETIME
+- updated_at — DATETIME
+
+A guest session can own multiple logs, each log belongs to one guest session
+A guest session can set one goal, each goal belongs to one guest session
+
 ```mermaid
 erDiagram
     GUEST_SESSIONS ||--o{ USAGE_LOGS : owns
-    GUEST_SESSIONS ||--o{ GOALS : sets
-    PLATFORMS ||--o{ USAGE_LOGS : categorizes
+    GUEST_SESSIONS ||--|| GOALS : has
 
     GUEST_SESSIONS {
         int id PK
@@ -72,16 +101,10 @@ erDiagram
         string status
     }
 
-    PLATFORMS {
-        int id PK
-        string name UK
-        boolean is_custom
-    }
-
     USAGE_LOGS {
         int id PK
         int guest_session_id FK
-        int platform_id FK
+        string platform_name
         int minutes_spent
         date logged_date
         datetime created_at
@@ -89,6 +112,7 @@ erDiagram
 
     GOALS {
         int id PK
+        int guest_session_id FK UK
         int daily_limit_minutes
         datetime created_at
         datetime updated_at
@@ -103,7 +127,7 @@ List the technologies you're using and justify each choice in one or two sentenc
 - Expo: Set of tools and services built on top of React Native to simplify development and speed up production
 - Expo Router: Part of Expo, file-based router to manage navigation between app screens, less navigation setup compared to React Navigation
 - TypeScript: Javascript but strongly typed, better than Javascript to limit programming errors
-- SQLite: Lightweight and simple database, don't need complex features like cloud sync and accounts, just locally storing logs of doomscrolling time, noSQL isn't needed since our data isn't very dynamic, logs between days will look simliar to other days
+- SQLite: Lightweight and simple database, don't need complex features like cloud sync and accounts, just storing logs of doomscrolling time, noSQL isn't needed since our data isn't very dynamic, logs between days will look simliar to other days
 - Node.js with Express: Simple way to build a REST API, lightweight and beginner friendly, will be our backend server to recieve requests from frontend and return JSON responses
 
 6. Out of Scope
@@ -111,7 +135,7 @@ What are you explicitly not building? This is important — it keeps scope from 
 
 Not building:
 - User accounts, login, passwords - Authentication is not really needed for a screen time app, adds friction to onboarding
-- Cloud sync - More complicated to implement, just local storage for now
+- Cloud sync - More complicated to implement, keeping it simple for now
 - Getting screen times direct from OS - Our inital thought on data collection but is platform specific and not very beginner friendly to do
 - Beyond the mobile platform - No support for desktop or browser, doomscrolling usually happens on our phone anyways and its unlikely you need to check stats on a computer or website
 
@@ -138,7 +162,7 @@ Sensitive data: Are you storing passwords? If so, are you hashing them? Are ther
 
 Exposed endpoints: Are any of your API endpoints accessible without authentication that shouldn't be?
 - Only the POST api/guest-sessions will be public for users to create a guest session, will have rate limiting on this 
-- The rest of the methos will be private and need a guest ID
+- The rest of the methods will be private and need a guest ID
 
 
 8. Repository Setup
