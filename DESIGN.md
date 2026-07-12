@@ -43,10 +43,57 @@ Frontend: What does the UI look like? What pages or views are there?
 - One home dashboard screen with minimal UI, rounded feel, swipe down for sections for goals, logging a session, statistics 
 
 Backend API: What does your server do? List your API endpoints — the HTTP method, the path, what it accepts, and what it returns. Your backend should expose a proper API (e.g. a REST API) that your frontend calls. It should not serve HTML directly or mix frontend and backend logic.
-- We will use a REST API
+- We will use a REST API where our backend will be a guest-session API, not account based since we don't need users to create accounts
+- The backend server will store doomscrolling data and will be accessed through a guest token/ID to validate users
 
+API endpoints:
+Method:         Path:                 Accepts:                                                 Returns:
+POST            /api/guest-sessions	  Created for first-time users, doesn't need data          A guest session ID or token used for future requests 
+POST	        /api/logs	          Guest token + log data (app name, minutes used, time)    The created log entry with its ID and saved values 
+GET	            /api/logs	          Guest token, optionally date filters                     A list of log entries for that guest session 
+GET	            /api/summary	      Guest token, optionally a date range                     Stats such as total minutes or most-used apps 
+PATCH	        /api/logs/:id	      Guest token + updated log fields (ID is in URL)          The updated log entry 
+DELETE	        /api/logs/:id	      Guest token (ID is in URL)                               Success message or 204 No Content 
+    
 Database: What data are you storing? Include a schema (table names, columns, types, relationships).
-This section must include at least one Mermaid diagram. Use whichever diagram type best fits your system — an entity-relationship diagram for your schema, a sequence diagram for a key user flow, or a component/architecture diagram. GitHub renders Mermaid natively in markdown. For example:
+This section must include at least one Mermaid diagram. Use whichever diagram type best fits your system — an entity-relationship diagram for your schema, a sequence diagram for a key user flow, or a component/architecture diagram. GitHub renders Mermaid natively in markdown. 
+
+```mermaid
+erDiagram
+    GUEST_SESSIONS ||--o{ USAGE_LOGS : owns
+    GUEST_SESSIONS ||--o{ GOALS : sets
+    PLATFORMS ||--o{ USAGE_LOGS : categorizes
+
+    GUEST_SESSIONS {
+        int id PK
+        string guest_token UK
+        datetime created_at
+        datetime last_active_at
+        string status
+    }
+
+    PLATFORMS {
+        int id PK
+        string name UK
+        boolean is_custom
+    }
+
+    USAGE_LOGS {
+        int id PK
+        int guest_session_id FK
+        int platform_id FK
+        int minutes_spent
+        date logged_date
+        datetime created_at
+    }
+
+    GOALS {
+        int id PK
+        int daily_limit_minutes
+        datetime created_at
+        datetime updated_at
+    }
+```
 
 
 5. Tech Stack
@@ -54,16 +101,16 @@ List the technologies you're using and justify each choice in one or two sentenc
 
 - React Native: Framework for building mobile apps with JavaScript/Typescript, has a simplicity advantage over Swift for iOS and Kotlin for Android, no need to use two seperate frameworks for two seperate operating systems
 - Expo: Set of tools and services built on top of React Native to simplify development and speed up production
-- Expo Router: Part of Expo, file-based router to manage navigation between app screens, eaiser to use compared to React Navigation
+- Expo Router: Part of Expo, file-based router to manage navigation between app screens, less navigation setup compared to React Navigation
 - TypeScript: Javascript but strongly typed, better than Javascript to limit programming errors
 - SQLite: Lightweight and simple database, don't need complex features like cloud sync and accounts, just locally storing logs of doomscrolling time, noSQL isn't needed since our data isn't very dynamic, logs between days will look simliar to other days
-- Node.js with Express: Simple way to build a REST API, lightweight and beginnerfriendly
+- Node.js with Express: Simple way to build a REST API, lightweight and beginner friendly, will be our backend server to recieve requests from frontend and return JSON responses
 
 6. Out of Scope
 What are you explicitly not building? This is important — it keeps scope from creeping. List features or use cases you considered but decided to skip for now.
 
 Not building:
-- User accounts, login, passwords - Authentication is not really needed for a screen time app, we aren't buliding this for parents to track their children
+- User accounts, login, passwords - Authentication is not really needed for a screen time app, adds friction to onboarding
 - Cloud sync - More complicated to implement, just local storage for now
 - Getting screen times direct from OS - Our inital thought on data collection but is platform specific and not very beginner friendly to do
 - Beyond the mobile platform - No support for desktop or browser, doomscrolling usually happens on our phone anyways and its unlikely you need to check stats on a computer or website
@@ -75,18 +122,23 @@ Possible ideas that are more reasonable to be implemented:
 Think through how your app could be abused or how user data could be exposed. You don't need an exhaustive threat model, but you do need to show that you've thought about it. For each point, describe what you're doing about it — not just that you're aware. Things to consider:
 
 Authentication & authorization: How do you verify who a user is? How do you ensure a user can only access their own data?
-- For the initial version we aren't building account login features or social components across users, the app will be for a single user without authentication
+- For the initial version we aren't building account login features or social components across users, but the app supports anonymous guest identities to make multiple users able to access their own data
+- This is weaker than server controlled authentication with accounts, guest sessions are lost if user switches devices or deletes the app, can't be used across devices
+- To help with that we will issue the guest ID through the backend server instead of client side, limit the guest ID permissions below admin level, securely storing the guest ID on the client side
 
 Input validation: What happens if a user submits unexpected or malicious input? (Think: SQL injection, XSS.)
-- For logs and goals, we will only accept integers from 0-1440 (none to a full day), reject everything else
-- For logs if the user wants to add a platform we haven't included in the "other" field we would limit the input to be a string about about 1-20 characters, trim whitespace, limit accepted punctuation
+- For logs and goals, the backend will only accept integers from 0-1440 (none to a full day), reject everything else
+- For logs if the user wants to add a platform we haven't included in the "other" field we would limit the input to be a string about about 1-20 characters, trim whitespace, limit accepted punctuation to an allowlist
+- Use parameterized queries (queries with placeholders for input) to prevent SQL injection
+- Don't render user input directly as HTML to prevent XSS injection
 
 Sensitive data: Are you storing passwords? If so, are you hashing them? Are there any API keys or secrets that should never be in the codebase?
-- There isn't much sensitive data since we aren't going to build accounts and logins, only logs for doomscrolling time per day and platforms used
-- We aren't using any 3rd party services or API keys
+- Main thing to protect is the guest ID, it should be treated as sensitive data as it is what the server uses to access user information
+- They will be generated by the backend, stored securely on the device, and will be validated server-side rather than trusted as arbitrary client input
 
 Exposed endpoints: Are any of your API endpoints accessible without authentication that shouldn't be?
-- We won't have any API endpoints in the first place for logs, history, stats, storing only minimal data locally
+- Only the POST api/guest-sessions will be public for users to create a guest session, will have rate limiting on this 
+- The rest of the methos will be private and need a guest ID
 
 
 8. Repository Setup
