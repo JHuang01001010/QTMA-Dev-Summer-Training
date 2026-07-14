@@ -112,7 +112,7 @@ erDiagram
 
     GOALS {
         int id PK
-        int guest_session_id FK UK
+        int guest_session_id FK
         int daily_limit_minutes
         datetime created_at
         datetime updated_at
@@ -154,7 +154,7 @@ Input validation: What happens if a user submits unexpected or malicious input? 
 - For logs and goals, the backend will only accept integers from 0-1440 (none to a full day), reject everything else
 - For logs if the user wants to add a platform we haven't included in the "other" field we would limit the input to be a string about about 1-20 characters, trim whitespace, limit accepted punctuation to an allowlist
 - Use parameterized queries (queries with placeholders for input) to prevent SQL injection
-- Don't render user input directly as HTML to prevent XSS injection
+- User input will never be rendered as raw HTML in any web-based interface, reducing XSS risk
 
 Sensitive data: Are you storing passwords? If so, are you hashing them? Are there any API keys or secrets that should never be in the codebase?
 - Main thing to protect is the guest ID, it should be treated as sensitive data as it is what the server uses to access user information
