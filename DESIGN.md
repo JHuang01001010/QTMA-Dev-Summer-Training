@@ -48,12 +48,12 @@ Backend API: What does your server do? List your API endpoints — the HTTP meth
 
 API endpoints:
 Method:         Path:                 Accepts:                                                 Returns:
-POST            /api/guest-sessions	  Created for first-time users, doesn't need data          A guest session ID or token used for future requests 
-POST	        /api/logs	          Guest token + log data (app name, minutes used, time)    The created log entry with its ID and saved values 
-GET	            /api/logs	          Guest token, optionally date filters                     A list of log entries for that guest session 
-GET	            /api/summary	      Guest token, optionally a date range                     Stats such as total minutes or most-used apps 
-PATCH	        /api/logs/:id	      Guest token + updated log fields (ID is in URL)          The updated log entry 
-DELETE	        /api/logs/:id	      Guest token (ID is in URL)                               Success message or 204 No Content 
+- POST            /api/guest-sessions	  Created for first-time users, doesn't need data          A guest session ID or token used for future requests 
+- POST	        /api/logs	          Guest token + log data (app name, minutes used, time)    The created log entry with its ID and saved values 
+- GET	            /api/logs	          Guest token, optionally date filters                     A list of log entries for that guest session 
+- GET	            /api/summary	      Guest token, optionally a date range                     Stats such as total minutes or most-used apps 
+- PATCH	        /api/logs/:id	      Guest token + updated log fields (ID is in URL)          The updated log entry 
+- DELETE	        /api/logs/:id	      Guest token (ID is in URL)                               Success message or 204 No Content 
     
 Database: What data are you storing? Include a schema (table names, columns, types, relationships).
 This section must include at least one Mermaid diagram. Use whichever diagram type best fits your system — an entity-relationship diagram for your schema, a sequence diagram for a key user flow, or a component/architecture diagram. GitHub renders Mermaid natively in markdown. 
