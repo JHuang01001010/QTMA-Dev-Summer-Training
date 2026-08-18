@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+doomscroll/doomscroll-mobile/android/
+doomscroll/doomscroll-mobile/ios/
+doomscroll/doomscroll-api/dist/
+
+# Database
+*.db
+
+# Env
+.env
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
