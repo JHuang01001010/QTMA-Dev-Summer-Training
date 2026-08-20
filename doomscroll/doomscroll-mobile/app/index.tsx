@@ -1,25 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Text, View, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createGuestSession } from '../lib/api';
 
-export default function Index() {
-  // Hold session data with guest token and session ID
-  const [sessionInfo, setSessionInfo] = useState<{ guest_token: string; session_id: number } | null>(null);
-  // Tracking request progress, default none in progress
+// First screen a user sees
+export default function Onboarding() {
+  const router = useRouter();
+  // Track if session creation request still ongoing
   const [loading, setLoading] = useState(false);
-  // Holds error message from API call
+  // Hold error message if any
   const [error, setError] = useState<string | null>(null);
 
-  // Create guest session
-  const handleCreateSession = async () => {
-    // Loading request, no errors yet
+  // When session creation happens
+  const handleGetStarted = async () => {
+    // Start loading without error
     setLoading(true);
     setError(null);
 
     try {
-      // Call backend API to create guest session
       const data = await createGuestSession();
-      setSessionInfo(data);
+      // Store session and guest token locally
+      await AsyncStorage.setItem('session_id', String(data.session_id));
+      await AsyncStorage.setItem('guest_token', data.guest_token);
+      // Move user to onboarding platforms once session saved
+      router.push('/platforms');
     } catch (e: any) {
       setError(e?.message || 'Failed to create session');
     } finally {
@@ -27,40 +32,27 @@ export default function Index() {
     }
   };
 
-  return ( // UI 
+  return (
     <View style={styles.container}>
-      {/* App title*/}
-      <Text style={styles.title}>Doomscroll Tracker</Text>
+      <Text style={styles.title}>
+        Doomscroll Tracker
+      </Text>
+      <Text style={styles.subtitle}>
+        Track how much time you spend on TikTok, Instagram, YouTube, and more.
+      </Text>
 
-      {/* Button on press creates session, disabled when request happening*/}
-      <Button title="Create Guest Session" onPress={handleCreateSession} disabled={loading} />
-
-      {/* Show spinner when request still loading*/}
+      {/* Start creating session and disable button*/}
+      <Button title="Get Started" onPress={handleGetStarted} disabled={loading} />
+      {/* Spinner when loading*/}
       {loading && <ActivityIndicator style={{ marginTop: 16 }} />}
-
-      {/* Show erorr if there is one*/}
       {error && <Text style={styles.error}>Error: {error}</Text>}
-
-      {/* Show session data once created*/}
-      {sessionInfo && (
-        <View style={styles.info}>
-          <Text style={styles.label}>Session ID:</Text>
-          <Text style={styles.value}>{sessionInfo.session_id}</Text>
-
-          <Text style={styles.label}>Guest Token:</Text>
-          <Text style={styles.value}>{sessionInfo.guest_token}</Text>
-        </View>
-      )}
     </View>
   );
 }
 
-// Styles for UI
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-  title: { fontSize: 20, fontWeight: '600', marginBottom: 24 },
-  info: { marginTop: 24, alignItems: 'flex-start', width: '100%' },
-  label: { fontSize: 14, opacity: 0.8, marginTop: 8 },
-  value: { fontSize: 16, fontWeight: '500' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, gap: 16 }, 
+  title: { fontSize: 20, fontWeight: '600' },
+  subtitle: { fontSize: 14, opacity: 0.8, textAlign: 'center' },
   error: { color: 'red', marginTop: 12 },
 });
