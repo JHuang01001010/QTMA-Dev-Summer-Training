@@ -4,27 +4,25 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createGuestSession } from '../lib/api';
 
-// First screen a user sees
+// Onboarding screen a user sees on app open
 export default function Onboarding() {
   const router = useRouter();
   // Track if session creation request still ongoing
   const [loading, setLoading] = useState(false);
-  // Hold error message if any
   const [error, setError] = useState<string | null>(null);
 
-  // When session creation happens
+  // Create guest session
   const handleGetStarted = async () => {
-    // Start loading without error
+    // Start loading, clear previous errors
     setLoading(true);
     setError(null);
 
     try {
       const data = await createGuestSession();
-      // Store session and guest token locally
+      // Store session and guest token locally so user doesn't see this onboarding again
       await AsyncStorage.setItem('session_id', String(data.session_id));
       await AsyncStorage.setItem('guest_token', data.guest_token);
-      // Move user to onboarding platforms once session saved
-      router.push('/platforms');
+      router.push('/dashboard');
     } catch (e: any) {
       setError(e?.message || 'Failed to create session');
     } finally {
@@ -41,11 +39,14 @@ export default function Onboarding() {
         Track how much time you spend on TikTok, Instagram, YouTube, and more.
       </Text>
 
-      {/* Start creating session and disable button*/}
+      {/* Create Session Button */}
       <Button title="Get Started" onPress={handleGetStarted} disabled={loading} />
-      {/* Spinner when loading*/}
-      {loading && <ActivityIndicator style={{ marginTop: 16 }} />}
+
+      {/* Display error if it exists */}
       {error && <Text style={styles.error}>Error: {error}</Text>}
+
+      {/* Spinner when loading */}
+      {loading && <ActivityIndicator style={{ marginTop: 16 }} />}
     </View>
   );
 }
