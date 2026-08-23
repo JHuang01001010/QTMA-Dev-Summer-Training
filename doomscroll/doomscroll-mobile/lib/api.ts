@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// True - running in android emulator, manually flip if not testing android
-const ANDROID = true;
+// True - running in android emulator, manually flip if not testing android like the web version
+const ANDROID = false;
 const BASE_URL = ANDROID
   ? 'http://10.0.2.2:3000/api' // Android emulator then host machine
   : 'http://localhost:3000/api'; // browser on same machine
