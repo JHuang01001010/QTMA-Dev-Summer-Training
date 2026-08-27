@@ -10,6 +10,12 @@ import { formatDuration } from '../lib/format';
 
 const screenWidth = Dimensions.get('window').width;
 
+// Candidate gap between Y-axis gridlines, in hours, smallest first. The first one that
+// keeps the axis within MAX_Y_SEGMENTS lines wins, so a light day gets half-hour
+// gridlines and a heavy one falls back to coarser steps instead of crowding.
+const Y_AXIS_STEPS = [0.5, 1, 2, 4, 6, 12];
+const MAX_Y_SEGMENTS = 5;
+
 // Preset colors for pie chart
 const PLATFORM_COLORS: Record<string, string> = {
   TikTok: '#ff0050',
@@ -105,6 +111,24 @@ export default function Dashboard() {
   // Array of the hours portion of scroll time each day 
   const dayTotalsHours = dayTotals.map((m) => Math.round((m / 60) * 10) / 10);
 
+  // Goal as hours, rounded the same way as the daily totals so the dashed line and
+  // the axis bound below are computed from the identical value
+  const goalHours = goal ? Math.round((goal.daily_limit_minutes / 60) * 10) / 10 : 0;
+
+  // chart-kit spreads its gridlines evenly between 0 and the largest plotted value,
+  // so an awkward max (1.5h over the default 4 segments) puts labels at 0.375/0.75/1.125.
+  // Rounding those to the nearest half hour for display produced duplicates ("1.0h, 1.0h")
+  // sitting on gridlines that weren't actually at those values. Instead, pick a round
+  // step and pin the top of the axis to a multiple of it, so every label is exact.
+  // Tallest thing the chart has to fit: the busiest day, or the goal line above it
+  const maxPlottedHours = Math.max(...dayTotalsHours, goalHours, 0);
+  const yStep =
+    Y_AXIS_STEPS.find((step) => Math.ceil(maxPlottedHours / step) <= MAX_Y_SEGMENTS) ??
+    Y_AXIS_STEPS[Y_AXIS_STEPS.length - 1];
+  // At least 2 segments so a week with nothing logged still draws a readable axis
+  const ySegments = Math.max(2, Math.ceil(maxPlottedHours / yStep));
+  const yAxisMax = yStep * ySegments;
+
   // Construct line graph of daily scroll time over a week
   const lineData = goal
     ? {
@@ -112,7 +136,7 @@ export default function Dashboard() {
         labels: dayLabels,
         datasets: [
           { data: dayTotalsHours, color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`, strokeWidth: 2 },
-          { data: last7Days.map(() => Math.round((goal.daily_limit_minutes / 60) * 10) / 10), color: () => `rgba(220, 38, 38, 1)`, 
+          { data: last7Days.map(() => goalHours), color: () => `rgba(220, 38, 38, 1)`, 
             strokeWidth: 2, strokeDashArray: [6, 4], withDots: false },
           ],
         legend: ['Minutes logged', 'Daily goal'],
@@ -204,10 +228,8 @@ export default function Dashboard() {
         height={220}
         yAxisSuffix="h"
         fromZero
-        formatYLabel={(yValue) => {
-          const rounded = Math.round(parseFloat(yValue) * 2) / 2;
-          return rounded.toFixed(1);
-        }}
+        fromNumber={yAxisMax}
+        segments={ySegments}
         chartConfig={{
           backgroundGradientFrom: '#ffffff',
           backgroundGradientTo: '#ffffff',

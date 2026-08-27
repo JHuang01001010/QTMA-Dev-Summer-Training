@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGoal, saveGoal } from '../lib/api';
@@ -40,35 +40,39 @@ export default function Goals() {
     }, []) // No need to rebuild, no props change
   );
 
-  // Validate goal input of hours, minutes, then create/update goal
+  // Validate goal input of hours, minutes, then create/update goal.
+  // Every failure path sets `error`, which is rendered inline below. Alert is a
+  // no-op stub on react-native-web, so pop-ups made these rejections invisible.
   const handleSave = async () => {
+    // Clear previous errors
+    setError(null);
+
     // Convert string into numbers, blank = 0
     const h = hours === '' ? 0 : Number(hours);
     const m = mins === '' ? 0 : Number(mins);
     // Catch invalid, negative, realistically impossible inputs
     if (Number.isNaN(h) || Number.isNaN(m)) {
-      Alert.alert('Invalid goal', 'Please enter valid numbers.');
+      setError('Please enter valid numbers');
       return;
     }
     if (h < 0 || h > 24) {
-      Alert.alert('Invalid goal', 'Hours must be between 0 and 24.');
+      setError('Hours must be between 0 and 24');
       return;
     }
     if (m < 0 || m > 59) {
-      Alert.alert('Invalid goal', 'Minutes must be between 0 and 59.');
+      setError('Minutes must be between 0 and 59');
       return;
     }
 
     // Recalculate as minutes as we store any log as minutes in backend, not hours + minutes
     const totalMinutes = h * 60 + m;
     if (totalMinutes > 1440) {
-      Alert.alert('Invalid goal', 'Daily goal cannot exceed 24 hours.');
+      setError('Daily goal cannot exceed 24 hours');
       return;
     }
 
     if (!sessionId) {
       setError('Missing session ID');
-      Alert.alert('Error', 'Missing session ID');
       return;
     }
 
@@ -79,14 +83,17 @@ export default function Goals() {
       // Database wants ID as number
       const goal = await saveGoal({ guest_session_id: Number(sessionId), daily_limit_minutes: totalMinutes });
       setCurrentLimit(goal.daily_limit_minutes);
-      // Pop-up with title, body text, button(s) if needed
-      Alert.alert('Success', 'Goal saved', [{ text: 'OK', onPress: () => router.back() },
-      ]);
+      // Back to the dashboard, where the goal shows up as the progress bar and the
+      // dashed line on the chart, which is the confirmation that it saved
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/dashboard');
+      }
     } catch (e: any) {
       const message = e?.response?.data?.error || e?.message || 'Could not save your goal. Try again.';
       setError(message);
-      Alert.alert('Error', message);
-    } finally {
+      // Only re-enable the button on failure; on success we have navigated away
       setSaving(false);
     }
   };
@@ -118,6 +125,9 @@ export default function Goals() {
         <Text style={styles.durationUnit}>min</Text>
       </View>
 
+      {/* Display error if it exists */}
+      {error && <Text style={styles.error}>Error: {error}</Text>}
+
       {/* Save and Cancel Buttons, prevent double-tap creating multiple createLog requests */}
       <TouchableOpacity style={styles.button} onPress={handleSave} disabled={saving}>
         <Text style={styles.buttonText}>{saving ? 'Saving...' : 'Save goal'}</Text>
@@ -137,6 +147,7 @@ const styles = StyleSheet.create({
   durationRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   durationInput: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, height: 48, fontSize: 16, width: 64, textAlign: 'center' },
   durationUnit: { fontSize: 15, color: '#555'},
+  error: { color: 'red', marginTop: 4 },
   button: { backgroundColor: '#2563eb', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 12 },
   buttonText: { color: '#fff', fontWeight: '600' },
   cancelButton: { borderWidth: 1, borderColor: '#999', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 10 },

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { createLog, getLogs } from '../lib/api';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -102,12 +102,20 @@ export default function LogScreen() {
     try {
       // Database wants ID as number
       await createLog({ guest_session_id: Number(sessionId), platform_name: platform, minutes_spent: totalMinutes, logged_date });
-      
-      // Pop-up with title, body text, button(s) if needed
-      Alert.alert('Success', 'Log saved', [{ text: 'OK', onPress: () => router.replace('/dashboard') }]);
+
+      // Go straight back to the dashboard. It refetches on focus, so the updated
+      // totals and charts are the confirmation that the log saved.
+      // (An Alert here would be silently skipped on web and strand the user.)
+      // Pop back to the dashboard already on the stack rather than pushing a second
+      // copy of it; replace() only as a fallback if this screen was opened directly.
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/dashboard');
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || 'Failed to save log');
-    } finally {
+      // Only re-enable the button on failure; on success we have navigated away
       setSaving(false);
     }
   };
